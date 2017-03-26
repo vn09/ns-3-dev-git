@@ -151,9 +151,9 @@ namespace ns3 {
 
       packet->CopyData (buf, dataLen);
       std::string m_receivedData = std::string ((char *)buf, dataLen);
-      NS_LOG_INFO("Cipher text" << m_receivedData);
+      NS_LOG_INFO("Cipher text:" << m_receivedData);
       string recoveredText = rsa_aodv.decrypt(m_receivedData.c_str());
-      NS_LOG_INFO("Plain text" << recoveredText);
+      NS_LOG_INFO("Plain text:" << recoveredText);
 
       packet->RemoveAllPacketTags();
       packet->RemoveAllByteTags();

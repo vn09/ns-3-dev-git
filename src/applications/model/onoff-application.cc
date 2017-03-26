@@ -89,6 +89,15 @@ OnOffApplication::GetTypeId (void)
     .AddTraceSource ("Tx", "A new packet is created and is sent",
                      MakeTraceSourceAccessor (&OnOffApplication::m_txTrace),
                      "ns3::Packet::TracedCallback")
+    .AddAttribute ("UseEncrypt", "Use Encrypt and Decrypt for packet",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&OnOffApplication::m_useEncrypt),
+                   MakeUintegerChecker<uint64_t> ()) // NDS-added
+    .AddAttribute ("FillData", "Fill in data",
+                   StringValue (""),
+                   MakeStringAccessor (&OnOffApplication::m_fillData),
+                   MakeStringChecker ()) // NDS-added
+
   ;
   return tid;
 }
@@ -99,7 +108,9 @@ OnOffApplication::OnOffApplication ()
     m_connected (false),
     m_residualBits (0),
     m_lastStartTime (Seconds (0)),
-    m_totBytes (0)
+    m_totBytes (0),
+    m_dataSize (0), // NDS-added
+    m_data (0) // NDS-added
 {
   NS_LOG_FUNCTION (this);
 }
@@ -107,7 +118,32 @@ OnOffApplication::OnOffApplication ()
 OnOffApplication::~OnOffApplication()
 {
   NS_LOG_FUNCTION (this);
+
+  // NDS-added
+  delete[] m_data;
+  m_data = 0;
+  m_dataSize = 0;
 }
+void
+OnOffApplication::SetFill(std::string fill) {
+  NS_LOG_FUNCTION(this << fill);
+
+  uint32_t dataSize = fill.size() + 1;
+
+  if (dataSize != m_dataSize) {
+    delete[] m_data;
+    m_data = new uint8_t[dataSize];
+    m_dataSize = dataSize;
+  }
+
+  memcpy(m_data, fill.c_str(), dataSize);
+
+  //
+  // Overwrite packet size attribute.
+  //
+  m_pktSize = dataSize;
+}
+
 
 void 
 OnOffApplication::SetMaxBytes (uint64_t maxBytes)
@@ -146,7 +182,9 @@ OnOffApplication::DoDispose (void)
 void OnOffApplication::StartApplication () // Called at time specified by Start
 {
   NS_LOG_FUNCTION (this);
-
+  if (m_useEncrypt == 1) {
+    SetFill(m_fillData);
+  }
   // Create the socket if not already
   if (!m_socket)
     {
@@ -271,7 +309,30 @@ void OnOffApplication::SendPacket ()
   NS_LOG_FUNCTION (this);
 
   NS_ASSERT (m_sendEvent.IsExpired ());
-  Ptr<Packet> packet = Create<Packet> (m_pktSize);
+
+  //Ptr<Packet> packet = Create<Packet> (m_pktSize);
+  Ptr <Packet> packet;
+  if (m_dataSize) {
+    //
+    // If m_dataSize is non-zero, we have a data buffer of the same size that we
+    // are expected to copy and send.  This state of affairs is created if one of
+    // the Fill functions is called.  In this case, m_size must have been set
+    // to agree with m_dataSize
+    //
+    NS_ASSERT_MSG(m_dataSize == m_pktSize, "OnOffApplication::Send(): m_pktSize and m_dataSize inconsistent");
+    NS_ASSERT_MSG(m_data, "OnOffApplication::Send(): m_dataSize but no m_data");
+    packet = Create<Packet>(m_data, m_dataSize);
+  } else {
+    //
+    // If m_dataSize is zero, the client has indicated that it doesn't care
+    // about the data itself either by specifying the data size by setting
+    // the corresponding attribute or by not calling a SetFill function.  In
+    // this case, we don't worry about it either.  But we do allow m_size
+    // to have a value different from the (zero) m_dataSize.
+    //
+    packet = Create<Packet>(m_pktSize);
+  }
+
   m_txTrace (packet);
   m_socket->Send (packet);
   m_totBytes += m_pktSize;

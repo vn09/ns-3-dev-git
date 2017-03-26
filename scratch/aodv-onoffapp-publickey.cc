@@ -1,8 +1,36 @@
-//
-// Created by Vuong Nguyen on 20/03/2017.
-//
+/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * This example program allows one to run ns-3 AODV under
+ * Copyright (c) 2011 University of Kansas
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Justin Rohrer <rohrej@ittc.ku.edu>
+ *
+ * James P.G. Sterbenz <jpgs@ittc.ku.edu>, director
+ * ResiliNets Research Group  http://wiki.ittc.ku.edu/resilinets
+ * Information and Telecommunication Technology Center (ITTC)
+ * and Department of Electrical Engineering and Computer Science
+ * The University of Kansas Lawrence, KS USA.
+ *
+ * Work supported in part by NSF FIND (Future Internet Design) Program
+ * under grant CNS-0626918 (Postmodern Internet Architecture),
+ * NSF grant CNS-1050226 (Multilayer Network Resilience Analysis and Experimentation on GENI),
+ * US Department of Defense (DoD), and ITTC at The University of Kansas.
+ */
+
+/*
+ * This example program allows one to run ns-3 DSDV, AODV, or OLSR under
  * a typical random waypoint mobility model.
  *
  * By default, the simulation runs for 200 simulated seconds, of which
@@ -23,8 +51,8 @@
  * DSDV to be used.
  *
  * By default, there are 10 source/sink data pairs sending UDP data
- * at an application rate of 2.048 Kb/s each. This is typically done
- * at a rate of 4 64-byte packets per second. Application data is
+ * at an application rate of 2.048 Kb/s each.    This is typically done
+ * at a rate of 4 64-byte packets per second.  Application data is
  * started at a random time between 50 and 51 seconds and continues
  * to the end of the simulation.
  *
@@ -37,6 +65,9 @@
  *   left commented inline in the program
  */
 
+/**
+ * Modified by Vuong Nguyen <vuongnq.09@gmail.com> on 23 March, 2017
+ */
 #include <fstream>
 #include <iostream>
 #include "ns3/core-module.h"
@@ -59,17 +90,17 @@ using namespace ns3;
 using namespace dsr;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE ("aodv-experiment");
+NS_LOG_COMPONENT_DEFINE ("manet-routing-compare");
 
 class RoutingExperiment {
 public:
   RoutingExperiment();
 
-  void Run(int nSinks, double txp, string CSVfileName);
+  void Run(int nSinks, double txp, std::string CSVfileName);
 
   //static void SetMACParam (ns3::NetDeviceContainer & devices,
   //                                 int slotDistance);
-  string CommandSetup(int argc, char **argv);
+  std::string CommandSetup(int argc, char **argv);
 
   // Input for testing
   string simplePlaintext = "The simple plaintext for MANETs";
@@ -101,9 +132,9 @@ private:
   uint32_t bytesTotal;
   uint32_t packetsReceived;
 
-  string m_CSVfileName;
+  std::string m_CSVfileName;
   int m_nSinks;
-  string m_protocolName;
+  std::string m_protocolName;
   double m_txp;
   bool m_traceMobility;
   uint32_t m_protocol;
@@ -119,7 +150,7 @@ RoutingExperiment::RoutingExperiment()
 {
 }
 
-static inline string
+static inline std::string
 PrintReceivedPacket(Ptr <Socket> socket, Ptr <Packet> packet, Address senderAddress) {
   std::ostringstream oss;
 
@@ -176,7 +207,7 @@ RoutingExperiment::SetupPacketReceive(Ipv4Address addr, Ptr <Node> node) {
   return sink;
 }
 
-string
+std::string
 RoutingExperiment::CommandSetup(int argc, char **argv) {
   CommandLine cmd;
   cmd.AddValue("CSVfileName", "The name of the CSV output file name", m_CSVfileName);
@@ -188,24 +219,8 @@ RoutingExperiment::CommandSetup(int argc, char **argv) {
 
 int
 main(int argc, char *argv[]) {
-  LogComponentEnable("UdpEchoClientApplication", LOG_LEVEL_INFO);
-  LogComponentEnable("UdpEchoServerApplication", LOG_LEVEL_INFO);
-
   RoutingExperiment experiment;
-  string CSVfileName = experiment.CommandSetup(argc, argv);
-
-  RSA_AODV rsa_aodv;
-  string plainText = "Hello world";
-  string cipherTextRSA = rsa_aodv.encrypt(plainText.data());
-  string recoveredRSA = rsa_aodv.decrypt(cipherTextRSA.data());
-  assert(recoveredRSA == plainText);
-  cout << "Assert RSA successfully" << std::endl;
-
-  ELGAMAL_AODV elgamal_aodv;
-  string cipherTextElgamal = elgamal_aodv.encrypt(plainText.data());
-  string recoveredElgamal = elgamal_aodv.decrypt(cipherTextElgamal.data());
-  assert(recoveredElgamal == plainText);
-  cout << "Assert Elgamal successfully" << std::endl;
+  std::string CSVfileName = experiment.CommandSetup(argc, argv);
 
   //blank out the last output file and write the column headers
   std::ofstream out(CSVfileName.c_str());
@@ -225,7 +240,7 @@ main(int argc, char *argv[]) {
 }
 
 void
-RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
+RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
   Packet::EnablePrinting();
   m_nSinks = nSinks;
   m_txp = txp;
@@ -234,9 +249,9 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   int nWifis = 50;
 
   double TotalTime = 200.0;
-  string rate("2048bps");
-  string phyMode("DsssRate11Mbps");
-  string tr_name("manet-routing-compare");
+  std::string rate("2048bps");
+  std::string phyMode("DsssRate11Mbps");
+  std::string tr_name("manet-routing-compare");
   int nodeSpeed = 20; //in m/s
   int nodePause = 0; //in s
   m_protocolName = "protocol";
@@ -247,7 +262,6 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   //Set Non-unicastMode rate to unicast mode
   Config::SetDefault("ns3::WifiRemoteStationManager::NonUnicastMode", StringValue(phyMode));
 
-  // Create 50 nodes
   NodeContainer adhocNodes;
   adhocNodes.Create(nWifis);
 
@@ -298,90 +312,108 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   NS_UNUSED(streamIndex); // From this point, streamIndex is unused
 
   AodvHelper aodv;
+  OlsrHelper olsr;
+  DsdvHelper dsdv;
+  DsrHelper dsr;
+  DsrMainHelper dsrMain;
   Ipv4ListRoutingHelper list;
   InternetStackHelper internet;
 
   switch (m_protocol) {
+    case 1:
+      list.Add(olsr, 100);
+      m_protocolName = "OLSR";
+      break;
     case 2:
       list.Add(aodv, 100);
       m_protocolName = "AODV";
+      break;
+    case 3:
+      list.Add(dsdv, 100);
+      m_protocolName = "DSDV";
+      break;
+    case 4:
+      m_protocolName = "DSR";
       break;
     default:
       NS_FATAL_ERROR("No such protocol:" << m_protocol);
   }
 
-  // Install internet with 50 nodes and each node's type is adhoc
-  internet.SetRoutingHelper(list);
-  internet.Install(adhocNodes);
+  if (m_protocol < 4) {
+    internet.SetRoutingHelper(list);
+    internet.Install(adhocNodes);
+  } else if (m_protocol == 4) {
+    internet.Install(adhocNodes);
+    dsrMain.Install(dsr, adhocNodes);
+  }
 
   NS_LOG_INFO("assigning ip address");
 
-  // Using IPv4 with IP ranges from 10.1.1.0 --> 10.1.1.49
   Ipv4AddressHelper addressAdhoc;
   addressAdhoc.SetBase("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer adhocInterfaces;
   adhocInterfaces = addressAdhoc.Assign(adhocDevices);
 
-  for (int i = 0; i < 1; i++) {
-    UdpEchoServerHelper echoServer(port);
+  OnOffHelper onoff1("ns3::UdpSocketFactory", Address());
+  onoff1.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
+  onoff1.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0]"));
 
-    ApplicationContainer serverApps = echoServer.Install(adhocNodes.Get(i + nSinks));
-    serverApps.Start(Seconds(1.0));
-    serverApps.Stop(Seconds(TotalTime));
+  for (int i = 0; i < nSinks; i++) {
+    Ptr <Socket> sink = SetupPacketReceive(adhocInterfaces.GetAddress(i), adhocNodes.Get(i));
 
-    UdpEchoClientHelper echoClient(adhocInterfaces.GetAddress(i + nSinks), port);
-    echoClient.SetAttribute("MaxPackets", UintegerValue(1));
-    echoClient.SetAttribute("Interval", TimeValue(Seconds(1.0)));
-    echoClient.SetAttribute("PacketSize", UintegerValue(1024));
+    AddressValue remoteAddress(InetSocketAddress(adhocInterfaces.GetAddress(i), port));
+    onoff1.SetAttribute("Remote", remoteAddress);
 
-    ApplicationContainer clientApps = echoClient.Install(adhocNodes.Get(i));
-    Ptr <UniformRandomVariable> var = CreateObject<UniformRandomVariable>();
-    clientApps.Start(Seconds(2));
-    clientApps.Stop(Seconds(TotalTime));
-
+    // Encrypt here
     RSA_AODV rsa_aodv;
-    echoClient.SetFill(clientApps.Get(i), rsa_aodv.encrypt(RoutingExperiment::simplePlaintext.data()));
+    onoff1.SetAttribute("UseEncrypt", UintegerValue(1));
+    onoff1.SetAttribute("FillData", StringValue(rsa_aodv.encrypt(RoutingExperiment::simplePlaintext.c_str())));
+
+    Ptr <UniformRandomVariable> var = CreateObject<UniformRandomVariable>();
+    ApplicationContainer temp = onoff1.Install(adhocNodes.Get(i + nSinks));
+    temp.Start(Seconds(var->GetValue(100.0, 101.0)));
+    temp.Stop(Seconds(TotalTime));
   }
 
-  // For visualisation with NetAdmin purpose only
-//  std::stringstream ss;
-//  ss << nWifis;
-//  string nodes = ss.str();
-//
-//  std::stringstream ss2;
-//  ss2 << nodeSpeed;
-//  string sNodeSpeed = ss2.str();
-//
-//  std::stringstream ss3;
-//  ss3 << nodePause;
-//  string sNodePause = ss3.str();
-//
-//  std::stringstream ss4;
-//  ss4 << rate;
-//  string sRate = ss4.str();
-//
-//  NS_LOG_INFO ("Configure Tracing.");
-//  tr_name = tr_name + "_" + m_protocolName + "_" + nodes + "nodes_" + sNodeSpeed + "speed_" + sNodePause + "pause_" + sRate + "rate";
-//
-//  AsciiTraceHelper ascii;
-//  Ptr <OutputStreamWrapper> osw = ascii.CreateFileStream((tr_name + ".tr").c_str());
-//  wifiPhy.EnableAsciiAll(osw);
-//  MobilityHelper::EnableAsciiAll(ascii.CreateFileStream(tr_name + ".mob"));
-//
-//  Ptr <FlowMonitor> flowmon;
-//  FlowMonitorHelper flowmonHelper;
-//  flowmon = flowmonHelper.InstallAll();
-//
+  std::stringstream ss;
+  ss << nWifis;
+  std::string nodes = ss.str();
+
+  std::stringstream ss2;
+  ss2 << nodeSpeed;
+  std::string sNodeSpeed = ss2.str();
+
+  std::stringstream ss3;
+  ss3 << nodePause;
+  std::string sNodePause = ss3.str();
+
+  std::stringstream ss4;
+  ss4 << rate;
+  std::string sRate = ss4.str();
+
+  //NS_LOG_INFO ("Configure Tracing.");
+  //tr_name = tr_name + "_" + m_protocolName +"_" + nodes + "nodes_" + sNodeSpeed + "speed_" + sNodePause + "pause_" + sRate + "rate";
+
+  //AsciiTraceHelper ascii;
+  //Ptr<OutputStreamWrapper> osw = ascii.CreateFileStream ( (tr_name + ".tr").c_str());
+  //wifiPhy.EnableAsciiAll (osw);
+  AsciiTraceHelper ascii;
+  MobilityHelper::EnableAsciiAll(ascii.CreateFileStream(tr_name + ".mob"));
+
+  //Ptr<FlowMonitor> flowmon;
+  //FlowMonitorHelper flowmonHelper;
+  //flowmon = flowmonHelper.InstallAll ();
+
+
   NS_LOG_INFO("Run Simulation.");
-//
+
   CheckThroughput();
-//
+
   Simulator::Stop(Seconds(TotalTime));
   Simulator::Run();
-//
-//  flowmon->SerializeToXmlFile((tr_name + ".flowmon").c_str(), false, false);
+
+  //flowmon->SerializeToXmlFile ((tr_name + ".flowmon").c_str(), false, false);
 
   Simulator::Destroy();
 }
-
 

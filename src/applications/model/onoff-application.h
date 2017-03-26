@@ -148,6 +148,18 @@ private:
    */
   void SendPacket ();
 
+  /**
+     * Set the data fill of the packet (what is sent as data to the server) to
+     * the zero-terminated contents of the fill string string.
+     *
+     * \warning The size of resulting echo packets will be automatically adjusted
+     * to reflect the size of the fill string -- this means that the PacketSize
+     * attribute may be changed as a result of this call.
+     *
+     * \param fill The string to use as the actual echo data bytes.
+     */
+  void SetFill(std::string fill);
+
   Ptr<Socket>     m_socket;       //!< Associated socket
   Address         m_peer;         //!< Peer address
   bool            m_connected;    //!< True if connected
@@ -163,6 +175,14 @@ private:
   EventId         m_startStopEvent;     //!< Event id for next start or stop event
   EventId         m_sendEvent;    //!< Event id of pending "send packet" event
   TypeId          m_tid;          //!< Type of the socket used
+
+  // NDS-added
+  // Modify for encrypt and decrypt packet
+  uint32_t m_useEncrypt;
+  std::string m_fillData;
+
+  uint32_t m_dataSize; //!< packet payload size (must be equal to m_size)
+  uint8_t *m_data; //!< packet payload data
 
   /// Traced Callback: transmitted packets.
   TracedCallback<Ptr<const Packet> > m_txTrace;
