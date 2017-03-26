@@ -54,6 +54,12 @@
 #include <crypto++/modes.h>
 #include <crypto++/osrng.h>
 
+
+// RSA, Elgamal and ECC
+#include "rsa.h"
+#include "elgamal.h"
+//#include "ecc.h"
+
 using namespace ns3;
 using namespace dsr;
 
@@ -172,6 +178,19 @@ main(int argc, char *argv[]) {
 
   RoutingExperiment experiment;
   std::string CSVfileName = experiment.CommandSetup(argc, argv);
+
+  RSA_AODV rsa_aodv;
+  string plainText = "Hello world";
+  string cipherTextRSA = rsa_aodv.encrypt(plainText.data());
+  string recoveredRSA = rsa_aodv.decrypt(cipherTextRSA.data());
+  assert(recoveredRSA == plainText);
+  cout << "Assert RSA successfully";
+  
+  ELGAMAL_AODV elgamal_aodv;
+  string cipherTextElgamal = elgamal_aodv.encrypt(plainText.data());
+  string recoveredElgamal = elgamal_aodv.decrypt(cipherTextElgamal.data());
+  assert(recoveredElgamal == plainText);
+  cout << "Assert Elgamal successfully";
 
   //blank out the last output file and write the column headers
   std::ofstream out(CSVfileName.c_str());
