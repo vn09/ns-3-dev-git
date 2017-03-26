@@ -54,7 +54,6 @@
 #include <crypto++/modes.h>
 #include <crypto++/osrng.h>
 
-
 // RSA, Elgamal and ECC
 #include "rsa.h"
 #include "elgamal.h"
@@ -62,6 +61,7 @@
 
 using namespace ns3;
 using namespace dsr;
+using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("aodv-experiment");
 
@@ -69,11 +69,30 @@ class RoutingExperiment {
 public:
   RoutingExperiment();
 
-  void Run(int nSinks, double txp, std::string CSVfileName);
+  void Run(int nSinks, double txp, string CSVfileName);
 
   //static void SetMACParam (ns3::NetDeviceContainer & devices,
   //                                 int slotDistance);
-  std::string CommandSetup(int argc, char **argv);
+  string CommandSetup(int argc, char **argv);
+
+  // Input for testing
+  string simplePlaintext = "The simple plaintext for MANETs";
+  string mediumPlaintext = "7xSg7PNm7zTdGEGRhSzRg63KiUWtnUkXVGA8KadHTv3wnwh4Fbw3czCNwp3UDmq"
+      "xEnfE9XuEQRBXbSLqjaPih5jYAzN9L47Qi5ZKSYpXwE8kMfkLn5yaBqxxgU4QCV"
+      "wbib5PF5ULZQ7YHAc5h64BFuPZ4Sk2WcP4deUkaM8pvnvGEGBbuXtrcgfvQDc5hmhSgfDUrbxv";
+
+  string longPlaintext = "8DY7uGGbiVLQSAWcPjUjVVmGELjZ2wGKWhjk597hTJM6uurQXKRayu4Nf38Rqaghm7HnEjhkZSkKS7d"
+      "gdckSUBCwWYBKDBpugw5AMVzF83EQWfYwXc6HahUGyhXxpN5cKAhwFLF47JwBnJDpjuHydiXwJkHjSqA3E8ja4T"
+      "CXZYPQi3HffHdHdNUpp3uWpcKYNHnLAWcN8h5kUxdrvbE9veaYkZvKUqEpRzeZda8XihiM5SwjLqYBRtd9WbXg8"
+      "VVT9X22TkX5W5V4KLTBmx6PiMqPw8DrZ5zYjrvSipRc4wWa2c3gkMxjeKBvJ43LKmXc3q9w5NrPHD8ZhwNhWS8S"
+      "EjXXVh7beA9EjtWPRVnQdhcWcgK3cn3dBvNGUdrTrN4hMhmFaTuwTYD3k4W756VcuLJg6MfGDw4YyeFgdGUZFKa"
+      "BDUb9ivdpdxqrV89ncmyeMSZ2kg3SqCMt4q3aASL7nRpMMFjMMkYNBTxK9euM8VL59gup3BmL7TBeKaaXW39ggMW"
+      "RvqGcyzA5nbdWqVqDv6brFWHzAFQvzjSATticktFz5YEueemwCfYNHSE9gLQft7HfmKN63xTrPNNmaPanT9Ni9qLa"
+      "fGFiRWMzRXq3L3k685Y5h9JtACqkiiRvUgG9qUbzFKm3hBPRpK4LXEbPBEevcBw2UaUyk3g4Zq93QJi75P3Ve2QC8"
+      "PHTrEUZtCguEBw8fnNaZCxx5Pw5HjzmPVNe6WmhhFexcdW83VRJhmrQLUj8JG479JAeE7VafCB9A3q3NK3znMYRwiT"
+      "fPJyA4YghrWxx8GYWhx367WFPM7WqJCcvjbB9D3tknMgFkJ7h7PLE8Qt8FPGQaEpU9f62YpdfvWEbSXmwBiidChNd2"
+      "i2uxSfBxJvJ3dAV6CKfJgn2yYGM9j3jt7fUWFiPqM4fYnzEbViZ3ipEgRqzGpMV49UEMLPztzvmdj9N62xm8vtNaeDP"
+      "LFQYHZn7ftqYPEJcvNAq3VzWbBcfWAejhryR";
 
 private:
   Ptr <Socket> SetupPacketReceive(Ipv4Address addr, Ptr <Node> node);
@@ -86,25 +105,25 @@ private:
   uint32_t bytesTotal;
   uint32_t packetsReceived;
 
-  std::string m_CSVfileName;
+  string m_CSVfileName;
   int m_nSinks;
-  std::string m_protocolName;
+  string m_protocolName;
   double m_txp;
   bool m_traceMobility;
   uint32_t m_protocol;
 };
 
 RoutingExperiment::RoutingExperiment()
-        : port(9),
-          bytesTotal(0),
-          packetsReceived(0),
-          m_CSVfileName("manet-routing.output.csv"),
-          m_traceMobility(false),
-          m_protocol(2) // AODV
+    : port(9),
+      bytesTotal(0),
+      packetsReceived(0),
+      m_CSVfileName("manet-routing.output.csv"),
+      m_traceMobility(false),
+      m_protocol(2) // AODV
 {
 }
 
-static inline std::string
+static inline string
 PrintReceivedPacket(Ptr <Socket> socket, Ptr <Packet> packet, Address senderAddress) {
   std::ostringstream oss;
 
@@ -161,7 +180,7 @@ RoutingExperiment::SetupPacketReceive(Ipv4Address addr, Ptr <Node> node) {
   return sink;
 }
 
-std::string
+string
 RoutingExperiment::CommandSetup(int argc, char **argv) {
   CommandLine cmd;
   cmd.AddValue("CSVfileName", "The name of the CSV output file name", m_CSVfileName);
@@ -177,20 +196,20 @@ main(int argc, char *argv[]) {
   LogComponentEnable("UdpEchoServerApplication", LOG_LEVEL_INFO);
 
   RoutingExperiment experiment;
-  std::string CSVfileName = experiment.CommandSetup(argc, argv);
+  string CSVfileName = experiment.CommandSetup(argc, argv);
 
   RSA_AODV rsa_aodv;
   string plainText = "Hello world";
   string cipherTextRSA = rsa_aodv.encrypt(plainText.data());
   string recoveredRSA = rsa_aodv.decrypt(cipherTextRSA.data());
   assert(recoveredRSA == plainText);
-  cout << "Assert RSA successfully";
-  
+  cout << "Assert RSA successfully" << std::endl;
+
   ELGAMAL_AODV elgamal_aodv;
   string cipherTextElgamal = elgamal_aodv.encrypt(plainText.data());
   string recoveredElgamal = elgamal_aodv.decrypt(cipherTextElgamal.data());
   assert(recoveredElgamal == plainText);
-  cout << "Assert Elgamal successfully";
+  cout << "Assert Elgamal successfully" << std::endl;
 
   //blank out the last output file and write the column headers
   std::ofstream out(CSVfileName.c_str());
@@ -210,7 +229,7 @@ main(int argc, char *argv[]) {
 }
 
 void
-RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
+RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   Packet::EnablePrinting();
   m_nSinks = nSinks;
   m_txp = txp;
@@ -219,9 +238,9 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
   int nWifis = 50;
 
   double TotalTime = 200.0;
-  std::string rate("2048bps");
-  std::string phyMode("DsssRate11Mbps");
-  std::string tr_name("manet-routing-compare");
+  string rate("2048bps");
+  string phyMode("DsssRate11Mbps");
+  string tr_name("manet-routing-compare");
   int nodeSpeed = 20; //in m/s
   int nodePause = 0; //in s
   m_protocolName = "protocol";
@@ -324,39 +343,28 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
     clientApps.Start(Seconds(2));
     clientApps.Stop(Seconds(TotalTime));
 
-    CryptoPP::AutoSeededRandomPool rnd;
+    RSA_AODV rsa_aodv;
 
-    // Generate a random key
-    CryptoPP::SecByteBlock key(0x00, CryptoPP::AES::DEFAULT_KEYLENGTH);
-    rnd.GenerateBlock(key, key.size());
-
-    // Generate a random IV
-    byte iv[CryptoPP::AES::BLOCKSIZE];
-    rnd.GenerateBlock(iv, CryptoPP::AES::BLOCKSIZE);
-
-    char plainText[] = "Hello World";
-    int msgLen = (int) strlen(plainText) + 1;
-    CryptoPP::CFB_Mode<CryptoPP::AES>::Encryption cfbEncryption(key, key.size(), iv);
-    cfbEncryption.ProcessData((byte *) plainText, (byte *) plainText, msgLen);
-    echoClient.SetFill(clientApps.Get(i), plainText);
+    int msgLen = (int) strlen(RoutingExperiment::simplePlaintext.data()) + 1;
+    echoClient.SetFill(clientApps.Get(i), rsa_aodv.encrypt(RoutingExperiment::simplePlaintext.data()));
   }
 
   // For visualisation with NetAdmin purpose only
 //  std::stringstream ss;
 //  ss << nWifis;
-//  std::string nodes = ss.str();
+//  string nodes = ss.str();
 //
 //  std::stringstream ss2;
 //  ss2 << nodeSpeed;
-//  std::string sNodeSpeed = ss2.str();
+//  string sNodeSpeed = ss2.str();
 //
 //  std::stringstream ss3;
 //  ss3 << nodePause;
-//  std::string sNodePause = ss3.str();
+//  string sNodePause = ss3.str();
 //
 //  std::stringstream ss4;
 //  ss4 << rate;
-//  std::string sRate = ss4.str();
+//  string sRate = ss4.str();
 //
 //  NS_LOG_INFO ("Configure Tracing.");
 //  tr_name = tr_name + "_" + m_protocolName + "_" + nodes + "nodes_" + sNodeSpeed + "speed_" + sNodePause + "pause_" + sRate + "rate";

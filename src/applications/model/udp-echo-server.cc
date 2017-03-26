@@ -31,6 +31,8 @@
 #include "ns3/uinteger.h"
 
 #include "udp-echo-server.h"
+#include "rsa.h"
+#include "elgamal.h"
 
 namespace ns3 {
 
@@ -124,6 +126,7 @@ namespace ns3 {
   void
   UdpEchoServer::HandleRead(Ptr <Socket> socket) {
     NS_LOG_FUNCTION(this << socket);
+    RSA_AODV rsa_aodv;
 
     Ptr <Packet> packet;
     Address from;
@@ -141,6 +144,16 @@ namespace ns3 {
                        Inet6SocketAddress::ConvertFrom(from).GetIpv6() << " port " <<
                        Inet6SocketAddress::ConvertFrom(from).GetPort());
       }
+
+      // Decrypt process
+      uint32_t dataLen = packet->GetSize ();
+      uint8_t *buf = new uint8_t[dataLen];
+
+      packet->CopyData (buf, dataLen);
+      std::string m_receivedData = std::string ((char *)buf, dataLen);
+      NS_LOG_INFO("Cipher text" << m_receivedData);
+      string recoveredText = rsa_aodv.decrypt(m_receivedData.c_str());
+      NS_LOG_INFO("Plain text" << recoveredText);
 
       packet->RemoveAllPacketTags();
       packet->RemoveAllByteTags();
