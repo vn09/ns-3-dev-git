@@ -68,6 +68,7 @@
 /**
  * Modified by Vuong Nguyen <vuongnq.09@gmail.com> on 23 March, 2017
  */
+#include <assert.h>
 #include <fstream>
 #include <iostream>
 #include "ns3/core-module.h"
@@ -76,9 +77,6 @@
 #include "ns3/mobility-module.h"
 #include "ns3/wifi-module.h"
 #include "ns3/aodv-module.h"
-#include "ns3/olsr-module.h"
-#include "ns3/dsdv-module.h"
-#include "ns3/dsr-module.h"
 #include "ns3/applications-module.h"
 
 // RSA, Elgamal and ECC
@@ -87,10 +85,9 @@
 //#include "ecc.h"
 
 using namespace ns3;
-using namespace dsr;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE ("manet-routing-compare");
+NS_LOG_COMPONENT_DEFINE ("aodv-experiment-public-crypto");
 
 class RoutingExperiment {
 public:
@@ -135,9 +132,18 @@ private:
   std::string m_CSVfileName;
   int m_nSinks;
   std::string m_protocolName;
+
   double m_txp;
   bool m_traceMobility;
   uint32_t m_protocol;
+
+
+  // Public cryptography algorithms
+  uint32_t m_algorithm;
+  std::string m_algorithmName;
+
+  RSA_AODV rsa_aodv;
+  ELGAMAL_AODV elgamal_aodv;
 };
 
 RoutingExperiment::RoutingExperiment()
@@ -146,7 +152,7 @@ RoutingExperiment::RoutingExperiment()
       packetsReceived(0),
       m_CSVfileName("manet-routing.output.csv"),
       m_traceMobility(false),
-      m_protocol(2) // AODV
+      m_algorithm(1) // RSA
 {
 }
 
@@ -170,6 +176,31 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
   Ptr <Packet> packet;
   Address senderAddress;
   while ((packet = socket->RecvFrom(senderAddress))) {
+    // Decrypt packet here
+    uint32_t dataLen = packet->GetSize();
+    uint8_t *buf = new uint8_t[dataLen];
+
+    packet->CopyData(buf, dataLen);
+    std::string m_receivedData = std::string((char *) buf, dataLen);
+    std::string recoveredText;
+
+    switch (m_algorithm) {
+      case 0:
+        break;
+      case 1:
+        recoveredText = rsa_aodv.decrypt(m_receivedData.c_str());
+        break;
+      case 2:
+        recoveredText = elgamal_aodv.decrypt(m_receivedData.c_str());
+        break;
+      case 3:
+        break;
+      default:
+        NS_FATAL_ERROR("No such protocol:" << m_algorithm);
+    }
+
+    assert(recoveredText == RoutingExperiment::simplePlaintext);
+
     bytesTotal += packet->GetSize();
     packetsReceived += 1;
     NS_LOG_UNCOND(PrintReceivedPacket(socket, packet, senderAddress));
@@ -213,6 +244,7 @@ RoutingExperiment::CommandSetup(int argc, char **argv) {
   cmd.AddValue("CSVfileName", "The name of the CSV output file name", m_CSVfileName);
   cmd.AddValue("traceMobility", "Enable mobility tracing", m_traceMobility);
   cmd.AddValue("protocol", "1=OLSR;2=AODV;3=DSDV;4=DSR", m_protocol);
+  cmd.AddValue("algorithm", "1=RSA;2=ELGAMAL;3=ECC", m_algorithm);
   cmd.Parse(argc, argv);
   return m_CSVfileName;
 }
@@ -251,7 +283,7 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
   double TotalTime = 200.0;
   std::string rate("2048bps");
   std::string phyMode("DsssRate11Mbps");
-  std::string tr_name("manet-routing-compare");
+  std::string tr_name("aodv-experiment-asym-crypto");
   int nodeSpeed = 20; //in m/s
   int nodePause = 0; //in s
   m_protocolName = "protocol";
@@ -312,40 +344,14 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
   NS_UNUSED(streamIndex); // From this point, streamIndex is unused
 
   AodvHelper aodv;
-  OlsrHelper olsr;
-  DsdvHelper dsdv;
-  DsrHelper dsr;
-  DsrMainHelper dsrMain;
   Ipv4ListRoutingHelper list;
   InternetStackHelper internet;
 
-  switch (m_protocol) {
-    case 1:
-      list.Add(olsr, 100);
-      m_protocolName = "OLSR";
-      break;
-    case 2:
-      list.Add(aodv, 100);
-      m_protocolName = "AODV";
-      break;
-    case 3:
-      list.Add(dsdv, 100);
-      m_protocolName = "DSDV";
-      break;
-    case 4:
-      m_protocolName = "DSR";
-      break;
-    default:
-      NS_FATAL_ERROR("No such protocol:" << m_protocol);
-  }
-
-  if (m_protocol < 4) {
-    internet.SetRoutingHelper(list);
-    internet.Install(adhocNodes);
-  } else if (m_protocol == 4) {
-    internet.Install(adhocNodes);
-    dsrMain.Install(dsr, adhocNodes);
-  }
+  // Add AODV
+  list.Add(aodv, 100);
+  m_protocolName = "AODV";
+  internet.SetRoutingHelper(list);
+  internet.Install(adhocNodes);
 
   NS_LOG_INFO("assigning ip address");
 
@@ -364,10 +370,31 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
     AddressValue remoteAddress(InetSocketAddress(adhocInterfaces.GetAddress(i), port));
     onoff1.SetAttribute("Remote", remoteAddress);
 
-    // Encrypt here
+    // Encrypt
+    std::string encryptedString;
+    switch (m_algorithm) {
+      case 0:
+        m_algorithmName = "None";
+        encryptedString = RoutingExperiment::simplePlaintext;
+        break;
+      case 1:
+        m_algorithmName = "RSA";
+        encryptedString = rsa_aodv.encrypt(RoutingExperiment::simplePlaintext.c_str());
+        break;
+      case 2:
+        m_algorithmName = "ELGAMAL";
+        encryptedString = elgamal_aodv.encrypt(RoutingExperiment::simplePlaintext.c_str());
+        break;
+      case 3:
+        m_algorithmName = "ECC";
+        break;
+      default:
+        NS_FATAL_ERROR("No such protocol:" << m_algorithm);
+    }
+
     RSA_AODV rsa_aodv;
     onoff1.SetAttribute("UseEncrypt", UintegerValue(1));
-    onoff1.SetAttribute("FillData", StringValue(rsa_aodv.encrypt(RoutingExperiment::simplePlaintext.c_str())));
+    onoff1.SetAttribute("FillData", StringValue(encryptedString));
 
     Ptr <UniformRandomVariable> var = CreateObject<UniformRandomVariable>();
     ApplicationContainer temp = onoff1.Install(adhocNodes.Get(i + nSinks));
