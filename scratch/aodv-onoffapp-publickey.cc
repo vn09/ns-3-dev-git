@@ -118,6 +118,10 @@ public:
       "i2uxSfBxJvJ3dAV6CKfJgn2yYGM9j3jt7fUWFiPqM4fYnzEbViZ3ipEgRqzGpMV49UEMLPztzvmdj9N62xm8vtNaeDP"
       "LFQYHZn7ftqYPEJcvNAq3VzWbBcfWAejhryR";
 
+  uint32_t getAlgorithm();
+
+  uint32_t getInputType();
+
 private:
   Ptr <Socket> SetupPacketReceive(Ipv4Address addr, Ptr <Node> node);
 
@@ -144,16 +148,27 @@ private:
 
   RSA_AODV rsa_aodv;
   ELGAMAL_AODV elgamal_aodv;
+
+  uint32_t m_inputType;
+  std::string m_inputTypeName;
 };
 
 RoutingExperiment::RoutingExperiment()
     : port(9),
       bytesTotal(0),
       packetsReceived(0),
-      m_CSVfileName("manet-routing.output.csv"),
+      m_CSVfileName("aodv-experiment-public-key"),
       m_traceMobility(false),
-      m_algorithm(1) // RSA
-{
+      m_algorithm(1), // RSA
+      m_inputType(1) {
+}
+
+uint32_t RoutingExperiment::getAlgorithm() {
+  return m_algorithm;
+}
+
+uint32_t RoutingExperiment::getInputType() {
+  return m_inputType;
 }
 
 static inline std::string
@@ -199,7 +214,19 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
         NS_FATAL_ERROR("No such protocol:" << m_algorithm);
     }
 
-    assert(recoveredText == RoutingExperiment::simplePlaintext);
+    switch (m_inputType) {
+      case 1:
+        assert(recoveredText == RoutingExperiment::simplePlaintext);
+        break;
+      case 2:
+        assert(recoveredText == RoutingExperiment::mediumPlaintext);
+        break;
+      case 3:
+        assert(recoveredText == RoutingExperiment::longPlaintext);
+        break;
+      default:
+        break;
+    }
 
     bytesTotal += packet->GetSize();
     packetsReceived += 1;
@@ -219,6 +246,8 @@ RoutingExperiment::CheckThroughput() {
       << packetsReceived << ","
       << m_nSinks << ","
       << m_protocolName << ","
+      << m_algorithmName << ","
+      << m_inputTypeName << ","
       << m_txp << ""
       << std::endl;
 
@@ -245,6 +274,7 @@ RoutingExperiment::CommandSetup(int argc, char **argv) {
   cmd.AddValue("traceMobility", "Enable mobility tracing", m_traceMobility);
   cmd.AddValue("protocol", "1=OLSR;2=AODV;3=DSDV;4=DSR", m_protocol);
   cmd.AddValue("algorithm", "1=RSA;2=ELGAMAL;3=ECC", m_algorithm);
+  cmd.AddValue("inputType", "1=simple;2=medium;3=large", m_inputType);
   cmd.Parse(argc, argv);
   return m_CSVfileName;
 }
@@ -255,12 +285,20 @@ main(int argc, char *argv[]) {
   std::string CSVfileName = experiment.CommandSetup(argc, argv);
 
   //blank out the last output file and write the column headers
+  // aodv-experiment-public-key_1_1.csv
+  // 1: RSA
+  // 1: simple type
+  CSVfileName = CSVfileName + "_" + std::to_string(experiment.getAlgorithm()) + "_" +
+                std::to_string(experiment.getInputType()) + ".csv";
   std::ofstream out(CSVfileName.c_str());
+
   out << "SimulationSecond," <<
       "ReceiveRate," <<
       "PacketsReceived," <<
       "NumberOfSinks," <<
       "RoutingProtocol," <<
+      "Algorithm," <<
+      "InputType," <<
       "TransmissionPower" <<
       std::endl;
   out.close();
@@ -372,18 +410,35 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
 
     // Encrypt
     std::string encryptedString;
+    std::string plainText;
+
+    switch (m_inputType) {
+      case 1:
+        plainText = RoutingExperiment::simplePlaintext;
+        m_inputTypeName = "Simple";
+        break;
+      case 2:
+        plainText = RoutingExperiment::mediumPlaintext;
+        m_inputTypeName = "Medium";
+        break;
+      case 3:
+        plainText = RoutingExperiment::longPlaintext;
+        m_inputTypeName = "Large";
+        break;
+    }
+
     switch (m_algorithm) {
       case 0:
         m_algorithmName = "None";
-        encryptedString = RoutingExperiment::simplePlaintext;
+        encryptedString = plainText;
         break;
       case 1:
         m_algorithmName = "RSA";
-        encryptedString = rsa_aodv.encrypt(RoutingExperiment::simplePlaintext.c_str());
+        encryptedString = rsa_aodv.encrypt(plainText.c_str());
         break;
       case 2:
         m_algorithmName = "ELGAMAL";
-        encryptedString = elgamal_aodv.encrypt(RoutingExperiment::simplePlaintext.c_str());
+        encryptedString = elgamal_aodv.encrypt(plainText.c_str());
         break;
       case 3:
         m_algorithmName = "ECC";
