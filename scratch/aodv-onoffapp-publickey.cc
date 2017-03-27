@@ -201,6 +201,7 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
 
     switch (m_algorithm) {
       case 0:
+        recoveredText = m_receivedData;
         break;
       case 1:
         recoveredText = rsa_aodv.decrypt(m_receivedData.c_str());
@@ -214,18 +215,21 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
         NS_FATAL_ERROR("No such protocol:" << m_algorithm);
     }
 
-    switch (m_inputType) {
-      case 1:
-        assert(recoveredText == RoutingExperiment::simplePlaintext);
-        break;
-      case 2:
-        assert(recoveredText == RoutingExperiment::mediumPlaintext);
-        break;
-      case 3:
-        assert(recoveredText == RoutingExperiment::longPlaintext);
-        break;
-      default:
-        break;
+    // Make sure the decrypted string is equal to the original one
+    if (m_algorithm > 0) {
+      switch (m_inputType) {
+        case 1:
+          assert(recoveredText == RoutingExperiment::simplePlaintext);
+          break;
+        case 2:
+          assert(recoveredText == RoutingExperiment::mediumPlaintext);
+          break;
+        case 3:
+          assert(recoveredText == RoutingExperiment::longPlaintext);
+          break;
+        default:
+          break;
+      }
     }
 
     bytesTotal += packet->GetSize();
@@ -273,7 +277,7 @@ RoutingExperiment::CommandSetup(int argc, char **argv) {
   cmd.AddValue("CSVfileName", "The name of the CSV output file name", m_CSVfileName);
   cmd.AddValue("traceMobility", "Enable mobility tracing", m_traceMobility);
   cmd.AddValue("protocol", "1=OLSR;2=AODV;3=DSDV;4=DSR", m_protocol);
-  cmd.AddValue("algorithm", "1=RSA;2=ELGAMAL;3=ECC", m_algorithm);
+  cmd.AddValue("algorithm", "0=None;1=RSA;2=ELGAMAL;3=ECC", m_algorithm);
   cmd.AddValue("inputType", "1=simple;2=medium;3=large", m_inputType);
   cmd.Parse(argc, argv);
   return m_CSVfileName;
