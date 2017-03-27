@@ -101,6 +101,7 @@ public:
 
   // Input for testing
   string simplePlaintext = "The simple plaintext for MANETs";
+
   string mediumPlaintext = "7xSg7PNm7zTdGEGRhSzRg63KiUWtnUkXVGA8KadHTv3wnwh4Fbw3czCNwp3UDmq"
       "xEnfE9XuEQRBXbSLqjaPih5jYAzN9L47Qi5ZKSYpXwE8kMfkLn5yaBqxxgU4QCV"
       "wbib5PF5ULZQ7YHAc5h64BFuPZ4Sk2WcP4deUkaM8pvnvGEGBbuXtrcgfvQDc5hmhSgfDUrbxv";
@@ -121,6 +122,17 @@ public:
   uint32_t getAlgorithm();
 
   uint32_t getInputType();
+
+  void initRSA();
+
+  void initElgamal();
+
+  RSA_AODV getRSA();
+
+  ELGAMAL_AODV getElgamal();
+
+  uint32_t m_RSAkeySize;
+  uint32_t m_ElgamalkeySize;
 
 private:
   Ptr <Socket> SetupPacketReceive(Ipv4Address addr, Ptr <Node> node);
@@ -146,11 +158,13 @@ private:
   uint32_t m_algorithm;
   std::string m_algorithmName;
 
-  RSA_AODV rsa_aodv;
-  ELGAMAL_AODV elgamal_aodv;
-
   uint32_t m_inputType;
   std::string m_inputTypeName;
+
+  int m_numOfNodes;
+
+  RSA_AODV rsa_aodv;
+  ELGAMAL_AODV elgamal_aodv;
 };
 
 RoutingExperiment::RoutingExperiment()
@@ -160,7 +174,26 @@ RoutingExperiment::RoutingExperiment()
       m_CSVfileName("aodv-experiment-public-key"),
       m_traceMobility(false),
       m_algorithm(1), // RSA
-      m_inputType(1) {
+      m_inputType(1),
+      m_RSAkeySize(3072),
+      m_ElgamalkeySize(1024),
+      m_numOfNodes(50) {
+}
+
+void RoutingExperiment::initRSA() {
+  rsa_aodv = new RSA_AODV(m_RSAkeySize);
+}
+
+void RoutingExperiment::initElgamal() {
+  elgamal_aodv = new ELGAMAL_AODV(m_ElgamalkeySize);
+}
+
+RSA_AODV RoutingExperiment::getRSA() {
+  return rsa_aodv;
+}
+
+ELGAMAL_AODV RoutingExperiment::getElgamal() {
+  return elgamal_aodv;
 }
 
 uint32_t RoutingExperiment::getAlgorithm() {
@@ -196,18 +229,18 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
     uint8_t *buf = new uint8_t[dataLen];
 
     packet->CopyData(buf, dataLen);
-    std::string m_receivedData = std::string((char *) buf, dataLen);
-    std::string recoveredText;
+    string m_receivedData = string((char *) buf, dataLen);
+    string recoveredText;
 
     switch (m_algorithm) {
       case 0:
         recoveredText = m_receivedData;
         break;
       case 1:
-        recoveredText = rsa_aodv.decrypt(m_receivedData.c_str());
+        recoveredText = RoutingExperiment::getRSA().decrypt(m_receivedData.c_str());
         break;
       case 2:
-        recoveredText = elgamal_aodv.decrypt(m_receivedData.c_str());
+        recoveredText = RoutingExperiment::getElgamal().decrypt(m_receivedData.c_str());
         break;
       case 3:
         break;
@@ -279,6 +312,10 @@ RoutingExperiment::CommandSetup(int argc, char **argv) {
   cmd.AddValue("protocol", "1=OLSR;2=AODV;3=DSDV;4=DSR", m_protocol);
   cmd.AddValue("algorithm", "0=None;1=RSA;2=ELGAMAL;3=ECC", m_algorithm);
   cmd.AddValue("inputType", "1=simple;2=medium;3=large", m_inputType);
+  cmd.AddValue("numOfNodes", "25;50;75;100", m_numOfNodes);
+  cmd.AddValue("rsaKeySize", "The key size used by RSA for encryption and decryption", m_RSAkeySize);
+  cmd.AddValue("rsaKeySize", "The key size used by Elgamal for encryption and decryption", m_ElgamalkeySize);
+
   cmd.Parse(argc, argv);
   return m_CSVfileName;
 }
@@ -310,6 +347,10 @@ main(int argc, char *argv[]) {
   int nSinks = 10;
   double txp = 7.5;
 
+  // Encryption and decryption
+  RSA_AODV rsa_aodv(RoutingExperiment::m_RSAkeySize);
+  ELGAMAL_AODV elgamal_aodv(RoutingExperiment::m_ElgamalkeySize);
+
   experiment.Run(nSinks, txp, CSVfileName);
 }
 
@@ -319,8 +360,6 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
   m_nSinks = nSinks;
   m_txp = txp;
   m_CSVfileName = CSVfileName;
-
-  int nWifis = 50;
 
   double TotalTime = 200.0;
   std::string rate("2048bps");
@@ -337,7 +376,7 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
   Config::SetDefault("ns3::WifiRemoteStationManager::NonUnicastMode", StringValue(phyMode));
 
   NodeContainer adhocNodes;
-  adhocNodes.Create(nWifis);
+  adhocNodes.Create(m_numOfNodes);
 
   // setting up wifi phy and channel using helpers
   WifiHelper wifi;
@@ -438,11 +477,11 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
         break;
       case 1:
         m_algorithmName = "RSA";
-        encryptedString = rsa_aodv.encrypt(plainText.c_str());
+        encryptedString = RoutingExperiment::getRSA().encrypt(plainText.c_str());
         break;
       case 2:
         m_algorithmName = "ELGAMAL";
-        encryptedString = elgamal_aodv.encrypt(plainText.c_str());
+        encryptedString = RoutingExperiment::getElgamal().encrypt(plainText.c_str());
         break;
       case 3:
         m_algorithmName = "ECC";
@@ -451,7 +490,6 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
         NS_FATAL_ERROR("No such protocol:" << m_algorithm);
     }
 
-    RSA_AODV rsa_aodv;
     onoff1.SetAttribute("UseEncrypt", UintegerValue(1));
     onoff1.SetAttribute("FillData", StringValue(encryptedString));
 
@@ -462,7 +500,7 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
   }
 
   std::stringstream ss;
-  ss << nWifis;
+  ss << m_numOfNodes;
   std::string nodes = ss.str();
 
   std::stringstream ss2;

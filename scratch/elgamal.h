@@ -17,21 +17,28 @@ using namespace std;
 using namespace CryptoPP;
 
 class ELGAMAL_AODV {
-  char privKey[128] = "elgamal.der";
-  char seed[256] = "Seed to be used by public";
+  string privKey;
+  string seed;
 
 public:
+  ELGAMAL_AODV();
+  ELGAMAL_AODV(int keySize);
   string encrypt(const char *plainText);
 
   string decrypt(const char *cipherText);
 };
 
+ELGAMAL_AODV::ELGAMAL_AODV(int keySize) {
+  privKey = "elgamal_" + to_string(keySize) + ".der";
+  seed = "Seed to be used by public";
+}
+
 string ELGAMAL_AODV::encrypt(const char *plainText) {
   RandomPool randPool;
-  randPool.IncorporateEntropy((byte *) ELGAMAL_AODV::seed, strlen(ELGAMAL_AODV::seed));
+  randPool.IncorporateEntropy((byte *) ELGAMAL_AODV::seed.c_str(), strlen(ELGAMAL_AODV::seed.c_str()));
 
   ElGamalKeys::PrivateKey privateKey;
-  privateKey.Load(FileSource(ELGAMAL_AODV::privKey, true).Ref());
+  privateKey.Load(FileSource(ELGAMAL_AODV::privKey.c_str(), true).Ref());
 
   ElGamal::Decryptor decryptor(privateKey);
   ElGamal::Encryptor encryptor(decryptor);
@@ -59,10 +66,10 @@ string ELGAMAL_AODV::encrypt(const char *plainText) {
 
 string ELGAMAL_AODV::decrypt(const char *hex) {
   RandomPool randPool;
-  randPool.IncorporateEntropy((byte *) ELGAMAL_AODV::seed, strlen(ELGAMAL_AODV::seed));
+  randPool.IncorporateEntropy((byte *) ELGAMAL_AODV::seed.c_str(), strlen(ELGAMAL_AODV::seed.c_str()));
 
   ElGamalKeys::PrivateKey privateKey;
-  privateKey.Load(FileSource(ELGAMAL_AODV::privKey, true).Ref());
+  privateKey.Load(FileSource(ELGAMAL_AODV::privKey.c_str(), true).Ref());
   ElGamal::Decryptor decryptor(privateKey);
 
   StringSource ss(hex, true, new HexDecoder);

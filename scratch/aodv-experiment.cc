@@ -194,14 +194,14 @@ main(int argc, char *argv[]) {
   RoutingExperiment experiment;
   string CSVfileName = experiment.CommandSetup(argc, argv);
 
-  RSA_AODV rsa_aodv;
+  RSA_AODV rsa_aodv(1024);
   string plainText = "Hello world";
   string cipherTextRSA = rsa_aodv.encrypt(plainText.data());
   string recoveredRSA = rsa_aodv.decrypt(cipherTextRSA.data());
   assert(recoveredRSA == plainText);
   cout << "Assert RSA successfully" << std::endl;
 
-  ELGAMAL_AODV elgamal_aodv;
+  ELGAMAL_AODV elgamal_aodv(1024);
   string cipherTextElgamal = elgamal_aodv.encrypt(plainText.data());
   string recoveredElgamal = elgamal_aodv.decrypt(cipherTextElgamal.data());
   assert(recoveredElgamal == plainText);
@@ -339,7 +339,7 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
     clientApps.Start(Seconds(2));
     clientApps.Stop(Seconds(TotalTime));
 
-    RSA_AODV rsa_aodv;
+    RSA_AODV rsa_aodv(1024);
     echoClient.SetFill(clientApps.Get(i), rsa_aodv.encrypt(RoutingExperiment::simplePlaintext.data()));
   }
 

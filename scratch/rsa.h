@@ -18,22 +18,30 @@ using namespace std;
 using namespace CryptoPP;
 
 class RSA_AODV {
-  char privFileName[128] = "privKey.txt";
-  char pubFileName[128] = "pubKey.txt";
-  char seed[256] = "Seed to be used by public";
+  string privFileName;
+  string pubFileName;
+  string seed;
 
-public:
-  string encrypt(const char *plainText);
-
-  string decrypt(const char *cipherText);
+  public:
+    string encrypt(const char *plainText);
+    string decrypt(const char *cipherText);
+    RSA_AODV(int key);
+    RSA_AODV();
 };
 
+
+RSA_AODV::RSA_AODV(int key) {
+  privFileName = "rsa_privKey_" + to_string(key) + ".txt";
+  pubFileName = "rsa_publicKey_" + to_string(key) + ".txt";
+  seed = "Seed to be used by public";
+}
+
 string RSA_AODV::encrypt(const char *plainText) {
-  FileSource pubFile(RSA_AODV::pubFileName, true, new Base64Decoder);
+  FileSource pubFile(RSA_AODV::pubFileName.c_str(), true, new Base64Decoder);
   RSAES_OAEP_SHA_Encryptor pub(pubFile);
 
   RandomPool randPool;
-  randPool.IncorporateEntropy((byte *) RSA_AODV::seed, strlen(RSA_AODV::seed));
+  randPool.IncorporateEntropy((byte *) RSA_AODV::seed.c_str(), strlen(RSA_AODV::seed.c_str()));
 
   std::string result;
   StringSource ss1(plainText, true, new PK_EncryptorFilter(randPool, pub, new HexEncoder(new StringSink(result))));
@@ -43,9 +51,9 @@ string RSA_AODV::encrypt(const char *plainText) {
 
 string RSA_AODV::decrypt(const char *cipherText) {
   RandomPool randPool;
-  randPool.IncorporateEntropy((byte *) RSA_AODV::seed, strlen(RSA_AODV::seed));
+  randPool.IncorporateEntropy((byte *) RSA_AODV::seed.c_str(), strlen(RSA_AODV::seed.c_str()));
 
-  FileSource privFile(RSA_AODV::privFileName, true, new Base64Decoder);
+  FileSource privFile(RSA_AODV::privFileName.c_str(), true, new Base64Decoder);
   RSAES_OAEP_SHA_Decryptor priv(privFile);
 
   std::string result;
