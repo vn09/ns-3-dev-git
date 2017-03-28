@@ -164,8 +164,8 @@ private:
 
   int m_numOfNodes;
 
-  RSA_AODV rsa_aodv;
-  ELGAMAL_AODV elgamal_aodv;
+  RSA_AODV *rsa_aodv;
+  ELGAMAL_AODV *elgamal_aodv;
 
   int m_RSAkeySize;
   int m_ElgamalkeySize;
@@ -185,11 +185,11 @@ RoutingExperiment::RoutingExperiment()
 }
 
 void RoutingExperiment::initRSA(int size) {
-  rsa_aodv(size);
+  rsa_aodv = new RSA_AODV(size);
 }
 
 void RoutingExperiment::initElgamal(int size) {
-  elgamal_aodv(size);
+  elgamal_aodv = new ELGAMAL_AODV(size);
 }
 
 RSA_AODV RoutingExperiment::getRSA() {
@@ -208,14 +208,14 @@ uint32_t RoutingExperiment::getInputType() {
   return m_inputType;
 }
 
-uint32_t RoutingExperiment::getRSAKeySize() {
+int RoutingExperiment::getRSAKeySize() {
   if (m_RSAkeySize) {
     return m_RSAkeySize;
   }
   return 0;
 }
 
-uint32_t RoutingExperiment::getElgamalKeySize() {
+int RoutingExperiment::getElgamalKeySize() {
   if (m_ElgamalkeySize) {
     return m_ElgamalkeySize;
   }
