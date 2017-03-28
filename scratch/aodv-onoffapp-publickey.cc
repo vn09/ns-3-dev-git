@@ -123,17 +123,17 @@ public:
 
   uint32_t getInputType();
 
-  void initRSA();
+  void initRSA(int);
 
-  void initElgamal();
+  void initElgamal(int);
 
   RSA_AODV getRSA();
 
   ELGAMAL_AODV getElgamal();
 
-  uint32_t getRSAKeySize();
+  int getRSAKeySize();
 
-  uint32_t getElgamalKeySize();
+  int getElgamalKeySize();
 
 private:
   Ptr <Socket> SetupPacketReceive(Ipv4Address addr, Ptr <Node> node);
@@ -167,8 +167,8 @@ private:
   RSA_AODV rsa_aodv;
   ELGAMAL_AODV elgamal_aodv;
 
-  uint32_t m_RSAkeySize;
-  uint32_t m_ElgamalkeySize;
+  int m_RSAkeySize;
+  int m_ElgamalkeySize;
 };
 
 RoutingExperiment::RoutingExperiment()
@@ -184,12 +184,12 @@ RoutingExperiment::RoutingExperiment()
       m_ElgamalkeySize(1024) {
 }
 
-void RoutingExperiment::initRSA() {
-  rsa_aodv(RoutingExperiment::getRSAKeySize());
+void RoutingExperiment::initRSA(int size) {
+  rsa_aodv(size);
 }
 
-void RoutingExperiment::initElgamal() {
-  elgamal_aodv(RoutingExperiment::getElgamalKeySize());
+void RoutingExperiment::initElgamal(int size) {
+  elgamal_aodv(size);
 }
 
 RSA_AODV RoutingExperiment::getRSA() {
@@ -351,8 +351,8 @@ main(int argc, char *argv[]) {
                 std::to_string(experiment.getInputType()) + ".csv";
   std::ofstream out(CSVfileName.c_str());
 
-  experiment::initRSA();
-  experiment::initElgamal();
+  experiment.initRSA(experiment.getRSAKeySize());
+  experiment.initElgamal(experiment.getElgamalKeySize());
 
   out << "SimulationSecond," <<
       "ReceiveRate," <<
@@ -369,8 +369,8 @@ main(int argc, char *argv[]) {
   double txp = 7.5;
 
   // Encryption and decryption
-  RSA_AODV rsa_aodv(experiment::getRSAKeySize());
-  ELGAMAL_AODV elgamal_aodv(experiment::getElgamalKeySize());
+  RSA_AODV rsa_aodv(experiment.getRSAKeySize());
+  ELGAMAL_AODV elgamal_aodv(experiment.getElgamalKeySize());
 
   experiment.Run(nSinks, txp, CSVfileName);
 }
