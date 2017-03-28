@@ -45,7 +45,7 @@ void GenKeyPair(int keySize) {
 
 int main() {
   int keySizeList[] = {256, 512, 1024, 2048, 3072};
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < sizeof(keySizeList); i++) {
     GenKeyPair(keySizeList[i]);
   }
 }
