@@ -93,11 +93,11 @@ class RoutingExperiment {
 public:
   RoutingExperiment();
 
-  void Run(int nSinks, double txp, std::string CSVfileName);
+  void Run(int nSinks, double txp, string CSVfileName);
 
   //static void SetMACParam (ns3::NetDeviceContainer & devices,
   //                                 int slotDistance);
-  std::string CommandSetup(int argc, char **argv);
+  string CommandSetup(int argc, char **argv);
 
   // Input for testing
   string simplePlaintext = "The simple plaintext for MANETs";
@@ -148,9 +148,9 @@ private:
   uint32_t bytesTotal;
   uint32_t packetsReceived;
 
-  std::string m_CSVfileName;
+  string m_CSVfileName;
   int m_nSinks;
-  std::string m_protocolName;
+  string m_protocolName;
 
   double m_txp;
   bool m_traceMobility;
@@ -159,10 +159,10 @@ private:
 
   // Public cryptography algorithms
   uint32_t m_algorithm;
-  std::string m_algorithmName;
+  string m_algorithmName;
 
   uint32_t m_inputType;
-  std::string m_inputTypeName;
+  string m_inputTypeName;
 
   int m_numOfNodes;
 
@@ -228,7 +228,7 @@ int RoutingExperiment::getElgamalKeySize() {
   return 0;
 }
 
-static inline std::string
+static inline string
 PrintReceivedPacket(Ptr <Socket> socket, Ptr <Packet> packet, Address senderAddress) {
   std::ostringstream oss;
 
@@ -328,7 +328,7 @@ RoutingExperiment::SetupPacketReceive(Ipv4Address addr, Ptr <Node> node) {
   return sink;
 }
 
-std::string
+string
 RoutingExperiment::CommandSetup(int argc, char **argv) {
   CommandLine cmd;
   cmd.AddValue("CSVfileName", "The name of the CSV output file name", m_CSVfileName);
@@ -347,14 +347,14 @@ RoutingExperiment::CommandSetup(int argc, char **argv) {
 int
 main(int argc, char *argv[]) {
   RoutingExperiment experiment;
-  std::string CSVfileName = experiment.CommandSetup(argc, argv);
+  string CSVfileName = experiment.CommandSetup(argc, argv);
 
   //blank out the last output file and write the column headers
   // aodv-experiment-public-key_1_1.csv
   // 1: RSA
   // 1: simple type
-  CSVfileName = CSVfileName + "_algorithm_" + std::to_string(experiment.getAlgorithm()) + "_inputType_" +
-                std::to_string(experiment.getInputType()) + "_node_" + experiment.getNumOfNodes() + ".csv";
+  CSVfileName = CSVfileName + "_algorithm_" + to_string(experiment.getAlgorithm()) + "_inputType_" +
+                std::to_string(experiment.getInputType()) + "_node_" + to_string(experiment.getNumOfNodes()) + ".csv";
   std::ofstream out(CSVfileName.c_str());
 
   experiment.initRSA(experiment.getRSAKeySize());
@@ -382,16 +382,16 @@ main(int argc, char *argv[]) {
 }
 
 void
-RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
+RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   Packet::EnablePrinting();
   m_nSinks = nSinks;
   m_txp = txp;
   m_CSVfileName = CSVfileName;
 
   double TotalTime = 200.0;
-  std::string rate("2048bps");
-  std::string phyMode("DsssRate11Mbps");
-  std::string tr_name("aodv-experiment-asym-crypto");
+  string rate("2048bps");
+  string phyMode("DsssRate11Mbps");
+  string tr_name("aodv-experiment-asym-crypto");
   int nodeSpeed = 20; //in m/s
   int nodePause = 0; //in s
   m_protocolName = "protocol";
@@ -438,9 +438,9 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
   Ptr <PositionAllocator> taPositionAlloc = pos.Create()->GetObject<PositionAllocator>();
   streamIndex += taPositionAlloc->AssignStreams(streamIndex);
 
-  std::stringstream ssSpeed;
+  stringstream ssSpeed;
   ssSpeed << "ns3::UniformRandomVariable[Min=0.0|Max=" << nodeSpeed << "]";
-  std::stringstream ssPause;
+  stringstream ssPause;
   ssPause << "ns3::ConstantRandomVariable[Constant=" << nodePause << "]";
   mobilityAdhoc.SetMobilityModel("ns3::RandomWaypointMobilityModel",
                                  "Speed", StringValue(ssSpeed.str()),
@@ -479,8 +479,8 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
     onoff1.SetAttribute("Remote", remoteAddress);
 
     // Encrypt
-    std::string encryptedString;
-    std::string plainText;
+    string encryptedString;
+    string plainText;
 
     switch (m_inputType) {
       case 1:
@@ -526,21 +526,21 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
     temp.Stop(Seconds(TotalTime));
   }
 
-  std::stringstream ss;
+  stringstream ss;
   ss << m_numOfNodes;
-  std::string nodes = ss.str();
+  string nodes = ss.str();
 
-  std::stringstream ss2;
+  stringstream ss2;
   ss2 << nodeSpeed;
-  std::string sNodeSpeed = ss2.str();
+  string sNodeSpeed = ss2.str();
 
-  std::stringstream ss3;
+  stringstream ss3;
   ss3 << nodePause;
-  std::string sNodePause = ss3.str();
+  string sNodePause = ss3.str();
 
-  std::stringstream ss4;
+  stringstream ss4;
   ss4 << rate;
-  std::string sRate = ss4.str();
+  string sRate = ss4.str();
 
   //NS_LOG_INFO ("Configure Tracing.");
   //tr_name = tr_name + "_" + m_protocolName +"_" + nodes + "nodes_" + sNodeSpeed + "speed_" + sNodePause + "pause_" + sRate + "rate";
