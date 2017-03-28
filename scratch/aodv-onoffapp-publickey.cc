@@ -84,6 +84,9 @@
 #include "elgamal.h"
 //#include "ecc.h"
 
+// Encrypt and decrypt time
+#include <time.h>
+
 using namespace ns3;
 using namespace std;
 
@@ -171,6 +174,10 @@ private:
 
   int m_RSAkeySize;
   int m_ElgamalkeySize;
+
+  // Timer for encrypt and decrypt
+  double m_encryptTime;
+  double m_decryptTime;
 };
 
 RoutingExperiment::RoutingExperiment()
@@ -256,6 +263,8 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
     string m_receivedData = string((char *) buf, dataLen);
     string recoveredText;
 
+
+    clock_t tDecryptStart = clock();
     switch (m_algorithm) {
       case 0:
         recoveredText = m_receivedData;
@@ -271,6 +280,8 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
       default:
         NS_FATAL_ERROR("No such protocol:" << m_algorithm);
     }
+
+    m_decryptTime = (double)(clock() - tDecryptStart)/CLOCKS_PER_SEC;
 
     // Make sure the decrypted string is equal to the original one
     if (m_algorithm > 0) {
@@ -309,7 +320,9 @@ RoutingExperiment::CheckThroughput() {
       << m_protocolName << ","
       << m_algorithmName << ","
       << m_inputTypeName << ","
-      << m_txp << ""
+      << m_txp << ","
+      << m_encryptTime << ","
+      << m_decryptTime << ""
       << std::endl;
 
   out.close();
@@ -367,7 +380,9 @@ main(int argc, char *argv[]) {
       "RoutingProtocol," <<
       "Algorithm," <<
       "InputType," <<
-      "TransmissionPower" <<
+      "TransmissionPower," <<
+      "EncryptTime," <<
+      "DecryptTime" <<
       std::endl;
   out.close();
 
@@ -497,6 +512,8 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
         break;
     }
 
+    clock_t tEncryptStart = clock();
+
     switch (m_algorithm) {
       case 0:
         m_algorithmName = "None";
@@ -516,6 +533,8 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
       default:
         NS_FATAL_ERROR("No such protocol:" << m_algorithm);
     }
+
+    m_decryptTime = (double)(clock() - tEncryptStart)/CLOCKS_PER_SEC;
 
     onoff1.SetAttribute("UseEncrypt", UintegerValue(1));
     onoff1.SetAttribute("FillData", StringValue(encryptedString));
