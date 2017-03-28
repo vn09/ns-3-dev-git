@@ -389,7 +389,7 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   m_CSVfileName = CSVfileName;
 
   double TotalTime = 200.0;
-  string rate("10240bps");
+  string rate("2048bps");
   string phyMode("DsssRate11Mbps");
   string tr_name("aodv-experiment-asym-crypto");
   int nodeSpeed = 20; //in m/s
