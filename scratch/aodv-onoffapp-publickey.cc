@@ -127,13 +127,15 @@ public:
 
   void initElgamal(int);
 
-  RSA_AODV getRSA();
+  RSA_AODV* getRSA();
 
-  ELGAMAL_AODV getElgamal();
+  ELGAMAL_AODV* getElgamal();
 
   int getRSAKeySize();
 
   int getElgamalKeySize();
+
+  int getNumOfNodes();
 
 private:
   Ptr <Socket> SetupPacketReceive(Ipv4Address addr, Ptr <Node> node);
@@ -192,11 +194,15 @@ void RoutingExperiment::initElgamal(int size) {
   elgamal_aodv = new ELGAMAL_AODV(size);
 }
 
-RSA_AODV RoutingExperiment::getRSA() {
+RSA_AODV* RoutingExperiment::getRSA() {
   return rsa_aodv;
 }
 
-ELGAMAL_AODV RoutingExperiment::getElgamal() {
+int RoutingExperiment::getNumOfNodes() {
+  return m_numOfNodes;
+}
+
+ELGAMAL_AODV* RoutingExperiment::getElgamal() {
   return elgamal_aodv;
 }
 
@@ -255,10 +261,10 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
         recoveredText = m_receivedData;
         break;
       case 1:
-        recoveredText = rsa_aodv.decrypt(m_receivedData.c_str());
+        recoveredText = rsa_aodv->decrypt(m_receivedData.c_str());
         break;
       case 2:
-        recoveredText = elgamal_aodv.decrypt(m_receivedData.c_str());
+        recoveredText = elgamal_aodv->decrypt(m_receivedData.c_str());
         break;
       case 3:
         break;
@@ -347,8 +353,8 @@ main(int argc, char *argv[]) {
   // aodv-experiment-public-key_1_1.csv
   // 1: RSA
   // 1: simple type
-  CSVfileName = CSVfileName + "_" + std::to_string(experiment.getAlgorithm()) + "_" +
-                std::to_string(experiment.getInputType()) + ".csv";
+  CSVfileName = CSVfileName + "_algorithm_" + std::to_string(experiment.getAlgorithm()) + "_inputType_" +
+                std::to_string(experiment.getInputType()) + "_node_" + experiment.getNumOfNodes() + ".csv";
   std::ofstream out(CSVfileName.c_str());
 
   experiment.initRSA(experiment.getRSAKeySize());
@@ -498,11 +504,11 @@ RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName) {
         break;
       case 1:
         m_algorithmName = "RSA";
-        encryptedString = rsa_aodv.encrypt(plainText.c_str());
+        encryptedString = rsa_aodv->encrypt(plainText.c_str());
         break;
       case 2:
         m_algorithmName = "ELGAMAL";
-        encryptedString = elgamal_aodv.encrypt(plainText.c_str());
+        encryptedString = elgamal_aodv->encrypt(plainText.c_str());
         break;
       case 3:
         m_algorithmName = "ECC";
