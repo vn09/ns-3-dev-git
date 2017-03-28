@@ -264,7 +264,7 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
     string recoveredText;
 
 
-    clock_t tDecryptStart = clock();
+    int64_t tDecryptStart = Simulator::Now().GetMilliSeconds();
     switch (m_algorithm) {
       case 0:
         recoveredText = m_receivedData;
@@ -281,7 +281,7 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
         NS_FATAL_ERROR("No such protocol:" << m_algorithm);
     }
 
-    m_decryptTime = (double)(clock() - tDecryptStart)/CLOCKS_PER_SEC;
+    m_decryptTime = (int64_t)(Simulator::Now().GetMilliSeconds() - tDecryptStart);
 
     // Make sure the decrypted string is equal to the original one
     if (m_algorithm > 0) {
@@ -512,7 +512,7 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
         break;
     }
 
-    clock_t tEncryptStart = clock();
+    int64_t tEncryptStart = Simulator::Now().GetMilliSeconds();
 
     switch (m_algorithm) {
       case 0:
@@ -534,7 +534,7 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
         NS_FATAL_ERROR("No such protocol:" << m_algorithm);
     }
 
-    m_decryptTime = (double)(clock() - tEncryptStart)/CLOCKS_PER_SEC;
+    m_encryptTime = (int64_t) (Simulator::Now().GetMilliSeconds() - tEncryptStart);
 
     onoff1.SetAttribute("UseEncrypt", UintegerValue(1));
     onoff1.SetAttribute("FillData", StringValue(encryptedString));
