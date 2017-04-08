@@ -78,6 +78,7 @@
 #include "ns3/wifi-module.h"
 #include "ns3/aodv-module.h"
 #include "ns3/applications-module.h"
+#include "ns3/flow-monitor-module.h"
 
 // RSA, Elgamal and ECC
 #include "rsa.h"
@@ -561,18 +562,17 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   ss4 << rate;
   string sRate = ss4.str();
 
-  //NS_LOG_INFO ("Configure Tracing.");
-  //tr_name = tr_name + "_" + m_protocolName +"_" + nodes + "nodes_" + sNodeSpeed + "speed_" + sNodePause + "pause_" + sRate + "rate";
+  NS_LOG_INFO ("Configure Tracing.");
+  tr_name = tr_name + "_" + m_protocolName +"_" + nodes + "nodes_" + sNodeSpeed + "speed_" + sNodePause + "pause_" + sRate + "rate";
 
-  //AsciiTraceHelper ascii;
-  //Ptr<OutputStreamWrapper> osw = ascii.CreateFileStream ( (tr_name + ".tr").c_str());
-  //wifiPhy.EnableAsciiAll (osw);
   AsciiTraceHelper ascii;
+  Ptr<OutputStreamWrapper> osw = ascii.CreateFileStream ( (tr_name + ".tr").c_str());
+  wifiPhy.EnableAsciiAll (osw);
   MobilityHelper::EnableAsciiAll(ascii.CreateFileStream(tr_name + ".mob"));
 
-  //Ptr<FlowMonitor> flowmon;
-  //FlowMonitorHelper flowmonHelper;
-  //flowmon = flowmonHelper.InstallAll ();
+  Ptr<FlowMonitor> flowmon;
+  FlowMonitorHelper flowmonHelper;
+  flowmon = flowmonHelper.InstallAll ();
 
 
   NS_LOG_INFO("Run Simulation.");
@@ -582,7 +582,7 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   Simulator::Stop(Seconds(TotalTime));
   Simulator::Run();
 
-  //flowmon->SerializeToXmlFile ((tr_name + ".flowmon").c_str(), false, false);
+  flowmon->SerializeToXmlFile ((tr_name + ".flowmon").c_str(), false, false);
 
   Simulator::Destroy();
 }
