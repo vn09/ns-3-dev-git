@@ -308,7 +308,7 @@ RoutingExperiment::ReceivePacket(Ptr <Socket> socket) {
 
 void
 RoutingExperiment::CheckThroughput() {
-  double kbs = (bytesTotal * 8.0) / 1000;
+  double kbs = (bytesTotal * 8.0) / 1000; // (MB/sec)
   bytesTotal = 0;
 
   std::ofstream out(m_CSVfileName.c_str(), std::ios::app);
