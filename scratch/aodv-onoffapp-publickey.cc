@@ -567,13 +567,16 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
 
   AsciiTraceHelper ascii;
   Ptr<OutputStreamWrapper> osw = ascii.CreateFileStream ( (tr_name + ".tr").c_str());
-  wifiPhy.EnableAsciiAll (osw);
-  MobilityHelper::EnableAsciiAll(ascii.CreateFileStream(tr_name + ".mob"));
+//  wifiPhy.EnableAsciiAll (osw);
+//  MobilityHelper::EnableAsciiAll(ascii.CreateFileStream(tr_name + ".mob"));
+//
+//  Ptr<FlowMonitor> flowmon;
+//  FlowMonitorHelper flowmonHelper;
+//  flowmon = flowmonHelper.InstallAll ();
 
-  Ptr<FlowMonitor> flowmon;
-  FlowMonitorHelper flowmonHelper;
-  flowmon = flowmonHelper.InstallAll ();
-
+//  AnimationInterface anim ("myredtests.xml");
+//  anim.EnableQueueCounters (Seconds (0), Seconds (TotalTime));
+//  anim.EnableIpv4L3ProtocolCounters (Seconds (0), Seconds (TotalTime));
 
   NS_LOG_INFO("Run Simulation.");
 
@@ -582,7 +585,7 @@ RoutingExperiment::Run(int nSinks, double txp, string CSVfileName) {
   Simulator::Stop(Seconds(TotalTime));
   Simulator::Run();
 
-  flowmon->SerializeToXmlFile ((tr_name + ".flowmon").c_str(), false, false);
+//  flowmon->SerializeToXmlFile ((tr_name + ".flowmon").c_str(), false, false);
 
   Simulator::Destroy();
 }

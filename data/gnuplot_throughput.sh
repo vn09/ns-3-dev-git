@@ -4,7 +4,10 @@ set output 'output_throughput.png'
 
 # Set title of column outside the box
 # set key invert reverse Left outside
-set key Left outside
+set key font ",12"
+# set key width -12
+# set key height 5
+set key inside left top
 
 # Set title
 set title "Throughput Comparision" font ",18"
